@@ -1,0 +1,24 @@
+{
+  "name": "Spell & Learn",
+  "short_name": "SpellLearn",
+  "id": "spellandlearn",
+  "description": "A fun and interactive kids learning game to spell words with letters, sounds, and pictures.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#9fd3ff",
+  "background_color": "#eaf6ff",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
