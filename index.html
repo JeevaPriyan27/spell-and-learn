@@ -9,15 +9,13 @@
   body{
     margin:0;
     overflow:hidden;
-    font-family: Arial, sans-serif;
+    font-family:Arial,sans-serif;
     background:#cfe9ff;
     text-align:center;
   }
   h2{
     margin:6px 0;
     font-size:28px;
-    z-index:2;
-    position:relative;
   }
   canvas{
     display:block;
@@ -62,7 +60,7 @@
 </div>
 
 <script>
-/* ========= CANVAS ========= */
+/* ===== CANVAS ===== */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
@@ -73,21 +71,31 @@ function resize(){
 resize();
 window.addEventListener("resize", resize);
 
-/* ========= BACKGROUND IMAGE (RELATIVE PATH) ========= */
+/* ===== BACKGROUND IMAGE ===== */
 const bg = new Image();
-bg.onload = () => console.log("✅ Background loaded");
-bg.onerror = () => console.error("❌ Background failed");
-bg.src = "bg.png";   // ✅ RELATIVE PATH – THIS IS THE FIX
+bg.src = "bg.png";
 
-/* ========= WORD LIST ========= */
+/* ===== WORD LIST (80+ WORDS) ===== */
 const words = [
+  // Animals
   "CAT","DOG","COW","PIG","HEN","DUCK","GOAT","LION","BEAR","FROG",
-  "FISH","BIRD","DEER","MONKEY","HORSE","SHEEP",
-  "APPLE","MANGO","BANANA","GRAPE","ORANGE","PEACH","PEAR",
+  "FISH","BIRD","DEER","MONKEY","HORSE","SHEEP","TIGER","RABBIT","MOUSE",
+
+  // Fruits
+  "APPLE","MANGO","BANANA","GRAPE","ORANGE","PEACH","PEAR","PLUM",
+
+  // Objects
   "BALL","BOOK","PEN","CUP","HAT","BAG","BOX","CHAIR","TABLE","BED",
+  "KEY","PHONE","CLOCK","SHOE",
+
+  // Vehicles
   "CAR","BUS","VAN","BIKE","TRAIN","SHIP","PLANE",
-  "SUN","MOON","STAR","TREE","RAIN","SNOW","CLOUD",
-  "MILK","WATER","HOME","DOOR","CLOCK","SHOE"
+
+  // Nature
+  "SUN","MOON","STAR","TREE","RAIN","SNOW","CLOUD","FLOWER","LEAF",
+
+  // Food / Daily
+  "MILK","WATER","BREAD","EGG","CAKE","HOME","DOOR","HOUSE"
 ];
 
 function shuffle(a){
@@ -98,31 +106,62 @@ function shuffle(a){
 }
 shuffle(words);
 
-/* ========= GAME STATE ========= */
-let w=0, i=0, collected="", hitLock=false;
+/* ===== EMOJI MAP (MATCHES ALL WORDS) ===== */
+const emojiMap = {
+  // Animals
+  CAT:"🐱", DOG:"🐶", COW:"🐄", PIG:"🐷", HEN:"🐔", DUCK:"🦆",
+  GOAT:"🐐", LION:"🦁", BEAR:"🐻", FROG:"🐸", FISH:"🐟",
+  BIRD:"🐦", DEER:"🦌", MONKEY:"🐒", HORSE:"🐴", SHEEP:"🐑",
+  TIGER:"🐯", RABBIT:"🐰", MOUSE:"🐭",
 
-const player = { x:200, y:300 };
-const letter = { x:100, y:150, char: words[0][0] };
+  // Fruits
+  APPLE:"🍎", MANGO:"🥭", BANANA:"🍌", GRAPE:"🍇",
+  ORANGE:"🍊", PEACH:"🍑", PEAR:"🍐", PLUM:"🍑",
 
-/* ========= SPEECH ========= */
+  // Objects
+  BALL:"⚽", BOOK:"📘", PEN:"🖊️", CUP:"☕", HAT:"🧢",
+  BAG:"🎒", BOX:"📦", CHAIR:"🪑", TABLE:"🪑", BED:"🛏️",
+  KEY:"🔑", PHONE:"📱", CLOCK:"⏰", SHOE:"👟",
+
+  // Vehicles
+  CAR:"🚗", BUS:"🚌", VAN:"🚐", BIKE:"🚲",
+  TRAIN:"🚆", SHIP:"🚢", PLANE:"✈️",
+
+  // Nature
+  SUN:"☀️", MOON:"🌙", STAR:"⭐", TREE:"🌳",
+  RAIN:"🌧️", SNOW:"❄️", CLOUD:"☁️", FLOWER:"🌸", LEAF:"🍃",
+
+  // Food / Daily
+  MILK:"🥛", WATER:"💧", BREAD:"🍞", EGG:"🥚", CAKE:"🍰",
+  HOME:"🏠", DOOR:"🚪", HOUSE:"🏠",
+
+  DEFAULT:"🎉"
+};
+
+/* ===== GAME STATE ===== */
+let w=0,i=0,collected="",hitLock=false;
+const player={x:200,y:300};
+const letter={x:100,y:150,char:words[0][0]};
+
+/* ===== SPEECH ===== */
 function speak(t){
   if(!speechSynthesis) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(t);
-  u.rate = 0.6;
+  const u=new SpeechSynthesisUtterance(t);
+  u.rate=0.6;
   speechSynthesis.speak(u);
 }
 
-/* ========= TOUCH INPUT ========= */
+/* ===== TOUCH ===== */
 canvas.addEventListener("touchmove",e=>{
   const r=canvas.getBoundingClientRect();
   const t=e.touches[0];
-  player.x = t.clientX - r.left - 40;
-  player.y = t.clientY - r.top - 40;
+  player.x=t.clientX-r.left-40;
+  player.y=t.clientY-r.top-40;
   e.preventDefault();
 });
 
-/* ========= DRAW ========= */
+/* ===== DRAW ===== */
 function drawBackground(){
   if(bg.complete){
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
@@ -138,77 +177,67 @@ function drawUI(){
   ctx.fillStyle="#333";
   ctx.font="bold 28px Arial";
   ctx.textAlign="center";
-  ctx.fillText("Word: " + collected, canvas.width/2, 45);
+  ctx.fillText("Word: "+collected,canvas.width/2,45);
 }
 
 function drawPlayer(){
   ctx.beginPath();
-  ctx.arc(player.x+40, player.y+40, 40, 0, Math.PI*2);
+  ctx.arc(player.x+40,player.y+40,40,0,Math.PI*2);
   ctx.fillStyle="#ffd180";
   ctx.fill();
   ctx.font="52px Arial";
   ctx.textAlign="center";
-  ctx.fillStyle="#000";
-  ctx.fillText("🐱", player.x+40, player.y+52);
+  ctx.fillText("🐱",player.x+40,player.y+52);
 }
 
 function drawLetter(){
   ctx.beginPath();
-  ctx.arc(letter.x+60, letter.y+60, 55, 0, Math.PI*2);
+  ctx.arc(letter.x+60,letter.y+60,55,0,Math.PI*2);
   ctx.fillStyle="#66bb6a";
   ctx.fill();
   ctx.fillStyle="#fff";
   ctx.font="bold 72px Arial";
   ctx.textAlign="center";
   ctx.textBaseline="middle";
-  ctx.fillText(letter.char, letter.x+60, letter.y+60);
+  ctx.fillText(letter.char,letter.x+60,letter.y+60);
 }
 
-/* ========= POPUP ========= */
-const emojiMap = {
-  CAT:"🐱", DOG:"🐶", COW:"🐄", DUCK:"🦆",
-  APPLE:"🍎", BANANA:"🍌", CAR:"🚗", BUS:"🚌", STAR:"⭐"
-};
-
+/* ===== POPUP ===== */
 function showPopup(word){
-  popupImg.textContent = emojiMap[word] || "🎉";
+  popupImg.textContent = emojiMap[word] || emojiMap.DEFAULT;
   popupWord.textContent = word;
-  popup.style.display = "flex";
+  popup.style.display="flex";
 }
 
-popupBtn.onclick = () => {
-  popup.style.display = "none";
-  w = (w + 1) % words.length;
-  i = 0;
-  collected = "";
-  letter.char = words[w][0];
-  letter.x = Math.random()*(canvas.width-140)+40;
-  letter.y = Math.random()*(canvas.height-200)+100;
-  hitLock = false;
+popupBtn.onclick=()=>{
+  popup.style.display="none";
+  w=(w+1)%words.length;
+  i=0; collected="";
+  letter.char=words[w][0];
+  letter.x=Math.random()*(canvas.width-140)+40;
+  letter.y=Math.random()*(canvas.height-200)+100;
+  hitLock=false;
 };
 
-/* ========= COLLISION ========= */
+/* ===== COLLISION ===== */
 function check(){
   if(hitLock) return;
-
-  const dx = (player.x+40)-(letter.x+60);
-  const dy = (player.y+40)-(letter.y+60);
-
-  if(Math.hypot(dx,dy) < 85){
-    hitLock = true;
-    collected += letter.char;
+  const dx=(player.x+40)-(letter.x+60);
+  const dy=(player.y+40)-(letter.y+60);
+  if(Math.hypot(dx,dy)<85){
+    hitLock=true;
+    collected+=letter.char;
     speak(letter.char);
     i++;
-    letter.x = -200;
-
-    if(i < words[w].length){
+    letter.x=-200;
+    if(i<words[w].length){
       setTimeout(()=>{
-        letter.char = words[w][i];
-        letter.x = Math.random()*(canvas.width-140)+40;
-        letter.y = Math.random()*(canvas.height-200)+100;
-        hitLock = false;
+        letter.char=words[w][i];
+        letter.x=Math.random()*(canvas.width-140)+40;
+        letter.y=Math.random()*(canvas.height-200)+100;
+        hitLock=false;
       },300);
-    } else {
+    }else{
       setTimeout(()=>{
         speak(words[w]);
         showPopup(words[w]);
@@ -217,7 +246,7 @@ function check(){
   }
 }
 
-/* ========= LOOP ========= */
+/* ===== LOOP ===== */
 function loop(){
   drawBackground();
   drawUI();
