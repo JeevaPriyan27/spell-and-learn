@@ -9,15 +9,16 @@
   body{
     margin:0;
     overflow:hidden;
-    background:#9fd3ff;
-    font-family:Arial,sans-serif;
+    font-family: Arial, sans-serif;
     text-align:center;
+    background:#cfe9ff;
   }
+
   h2{
     margin:6px 0;
-    position:relative;
-    z-index:2;
+    font-size:28px;
   }
+
   canvas{
     display:block;
     margin:0 auto;
@@ -25,21 +26,26 @@
   }
 </style>
 </head>
-<body>
 
+<body>
 <h2>Spell & Learn</h2>
 <canvas id="c"></canvas>
 
+<!-- WORD COMPLETE POPUP -->
 <div id="popup" style="
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.4);
-  align-items:center; justify-content:center;
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  align-items:center;
+  justify-content:center;
   z-index:10;">
   <div style="
-    background:#fff; padding:24px;
+    background:white;
+    padding:24px;
     border-radius:24px;
-    text-align:center;
-    width:85%; max-width:320px;">
+    width:85%;
+    max-width:320px;">
     <div id="popupImg" style="font-size:96px">🐱</div>
     <div id="popupWord" style="font-size:36px;font-weight:bold;margin:12px 0"></div>
     <button id="popupBtn" style="
@@ -48,23 +54,17 @@
       border:none;
       border-radius:16px;
       background:#4caf50;
-      color:#fff;">
+      color:white;">
       OK
     </button>
   </div>
 </div>
 
 <script>
+/* ================= CANVAS SETUP ================= */
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-/* ---------- BACKGROUND IMAGE ---------- */
-const bg = new Image();
-bg.src = "background.png"; // MUST be in repo root
-let bgReady = false;
-bg.onload = () => bgReady = true;
-
-/* ---------- RESIZE ---------- */
 function resize(){
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -72,131 +72,30 @@ function resize(){
 resize();
 window.addEventListener("resize", resize);
 
-/* ---------- WORDS ---------- */
+/* ================= BACKGROUND IMAGE ================= */
+const bg = new Image();
+bg.src = "/spell-and-learn/bg.png";   // 👈 your background image file
+
+/* ================= WORDS ================= */
+const words = [
+  "CAT","DOG","COW","PIG","HEN","DUCK","GOAT","LION","BEAR","FROG",
+  "FISH","BIRD","DEER","MONKEY","HORSE","SHEEP",
+  "APPLE","MANGO","BANANA","GRAPE","ORANGE","PEACH","PEAR",
+  "BALL","BOOK","PEN","CUP","HAT","BAG","BOX","CHAIR","TABLE","BED",
+  "CAR","BUS","VAN","BIKE","TRAIN","SHIP","PLANE",
+  "SUN","MOON","STAR","TREE","RAIN","SNOW","CLOUD",
+  "MILK","WATER","HOME","DOOR","CLOCK","SHOE"
+];
+
 function shuffle(a){
   for(let i=a.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
     [a[i],a[j]]=[a[j],a[i]];
   }
 }
-
-const words = [
-  "CAT","DOG","COW","PIG","HEN","DUCK","GOAT","LION","BEAR","FROG",
-  "FISH","BIRD","DEER","MONKEY","HORSE","SHEEP",
-  "APPLE","MANGO","BANANA","GRAPE","ORANGE","PEACH","PEAR","PLUM",
-  "BALL","BOOK","PEN","CUP","HAT","BAG","BOX","CHAIR","TABLE","BED",
-  "CAR","BUS","VAN","BIKE","TRAIN","SHIP","PLANE",
-  "SUN","MOON","STAR","TREE","RAIN","SNOW","WIND","CLOUD",
-  "MILK","WATER","FOOD","HOME","DOOR","CLOCK","SHOE","SOCK",
-  "RED","BLUE","GREEN","YELLOW","PINK","BLACK","WHITE"
-];
 shuffle(words);
 
-/* ---------- GAME STATE ---------- */
-let w=0,i=0,collected="",hitLock=false;
-const player={x:200,y:200,size:40,speed:15};
-const letter={x:100,y:100,char:words[0][0]};
+/* ================= GAME STATE ================= */
+let w=0, i=0, collected="", hitLock=false;
 
-/* ---------- SPEECH ---------- */
-function speak(text){
-  if(!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.rate=0.55;
-  speechSynthesis.speak(u);
-}
-
-/* ---------- CONTROLS ---------- */
-document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft") player.x-=player.speed;
-  if(e.key==="ArrowRight") player.x+=player.speed;
-  if(e.key==="ArrowUp") player.y-=player.speed;
-  if(e.key==="ArrowDown") player.y+=player.speed;
-});
-
-canvas.addEventListener("touchmove",e=>{
-  const r=canvas.getBoundingClientRect();
-  const t=e.touches[0];
-  player.x=t.clientX-r.left-player.size/2;
-  player.y=t.clientY-r.top-player.size/2;
-  e.preventDefault();
-});
-
-/* ---------- DRAW ---------- */
-function drawBackground(){
-  if(bgReady){
-    ctx.drawImage(bg,0,0,canvas.width,canvas.height);
-  }else{
-    ctx.fillStyle="#dff1ff";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-  }
-}
-
-function drawUI(){
-  ctx.fillStyle="rgba(255,255,255,0.85)";
-  ctx.fillRect(0,0,canvas.width,70);
-  ctx.fillStyle="#333";
-  ctx.font="bold 28px Arial";
-  ctx.textAlign="center";
-  ctx.fillText("Word: "+collected,canvas.width/2,45);
-}
-
-function drawPlayer(){
-  ctx.beginPath();
-  ctx.arc(player.x+40,player.y+40,40,0,Math.PI*2);
-  ctx.fillStyle="#ffcc80";
-  ctx.fill();
-  ctx.font="52px Arial";
-  ctx.textAlign="center";
-  ctx.fillText("🐱",player.x+40,player.y+52);
-}
-
-function drawLetter(){
-  ctx.beginPath();
-  ctx.arc(letter.x+60,letter.y+60,55,0,Math.PI*2);
-  ctx.fillStyle="#66bb6a";
-  ctx.fill();
-  ctx.fillStyle="#fff";
-  ctx.font="bold 72px Arial";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText(letter.char,letter.x+60,letter.y+60);
-}
-
-/* ---------- GAME LOGIC ---------- */
-function check(){
-  if(hitLock) return;
-  const dx=(player.x+40)-(letter.x+60);
-  const dy=(player.y+40)-(letter.y+60);
-  if(Math.hypot(dx,dy)<85){
-    hitLock=true;
-    collected+=letter.char;
-    speak(letter.char);
-    i++;
-    letter.x=-200;
-    if(i<words[w].length){
-      setTimeout(()=>{
-        letter.char=words[w][i];
-        letter.x=Math.random()*(canvas.width-140)+40;
-        letter.y=Math.random()*(canvas.height-200)+100;
-        hitLock=false;
-      },300);
-    }else{
-      setTimeout(()=>speak(words[w]),400);
-    }
-  }
-}
-
-/* ---------- LOOP ---------- */
-function loop(){
-  drawBackground();
-  drawUI();
-  drawLetter();
-  drawPlayer();
-  check();
-  requestAnimationFrame(loop);
-}
-loop();
-</script>
-</body>
-</html>
+const player = { x:200
