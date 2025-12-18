@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <title>Spell & Learn</title>
 <link rel="manifest" href="/spell-and-learn/manifest.json">
+
 <style>
   body{
     margin:0;
     overflow:hidden;
-    background:linear-gradient(180deg,#9fd3ff,#eaf6ff);
+    background:#9fd3ff;
     font-family:Arial,sans-serif;
     text-align:center;
   }
@@ -20,194 +21,8 @@
   }
 </style>
 </head>
+
 <body>
 
 <h2>Spell & Learn</h2>
-<canvas id="c"></canvas>
-
-<div id="popup" style="
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.4);
-  align-items:center; justify-content:center;
-  z-index:10;">
-  <div style="
-    background:#fff; padding:24px;
-    border-radius:24px;
-    text-align:center;
-    width:85%; max-width:320px;">
-    <div id="popupImg" style="font-size:96px">🐱</div>
-    <div id="popupWord" style="font-size:36px;font-weight:bold;margin:12px 0"></div>
-    <button id="popupBtn" style="
-      font-size:24px;
-      padding:12px 28px;
-      border:none;
-      border-radius:16px;
-      background:#4caf50;
-      color:#fff;">
-      OK
-    </button>
-  </div>
-</div>
-
-<script>
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
-
-function resize(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener("resize", resize);
-
-function shuffle(a){
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-}
-
-const words = [
-  "CAT","DOG","COW","PIG","HEN","DUCK","GOAT","LION","BEAR","FROG",
-  "FISH","BIRD","DEER","MONKEY","HORSE","SHEEP",
-  "APPLE","MANGO","BANANA","GRAPE","ORANGE","PEACH","PEAR","PLUM",
-  "BALL","BOOK","PEN","CUP","HAT","BAG","BOX","CHAIR","TABLE","BED",
-  "CAR","BUS","VAN","BIKE","TRAIN","SHIP","PLANE",
-  "SUN","MOON","STAR","TREE","RAIN","SNOW","WIND","CLOUD",
-  "MILK","WATER","FOOD","HOME","DOOR","CLOCK","SHOE","SOCK",
-  "RED","BLUE","GREEN","YELLOW","PINK","BLACK","WHITE"
-];
-shuffle(words);
-
-let w=0,i=0,collected="",hitLock=false;
-const player={x:200,y:200,size:40,speed:15};
-const letter={x:100,y:100,char:words[0][0]};
-
-function speak(text){
-  if(!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text.length===1?text+" ":text);
-  u.rate=0.55;
-  speechSynthesis.speak(u);
-}
-
-document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft") player.x-=player.speed;
-  if(e.key==="ArrowRight") player.x+=player.speed;
-  if(e.key==="ArrowUp") player.y-=player.speed;
-  if(e.key==="ArrowDown") player.y+=player.speed;
-});
-
-canvas.addEventListener("touchmove",e=>{
-  const r=canvas.getBoundingClientRect();
-  const t=e.touches[0];
-  player.x=t.clientX-r.left-player.size/2;
-  player.y=t.clientY-r.top-player.size/2;
-  e.preventDefault();
-});
-
-function drawUI(){
-  ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,canvas.width,70);
-  ctx.fillStyle="#333";
-  ctx.font="bold 28px Arial";
-  ctx.textAlign="center";
-  ctx.fillText("Word: "+collected,canvas.width/2,45);
-}
-
-function drawPlayer(){
-  ctx.fillStyle="#ffcc80";
-  ctx.beginPath();
-  ctx.arc(player.x+40,player.y+40,40,0,Math.PI*2);
-  ctx.fill();
-  ctx.font="52px Arial";
-  ctx.fillStyle="#000";
-  ctx.textAlign="center";
-  ctx.fillText("🐱",player.x+40,player.y+48);
-}
-
-function drawLetter(){
-  ctx.save();
-  ctx.fillStyle="#66bb6a";
-  ctx.beginPath();
-  ctx.arc(letter.x+60,letter.y+60,55,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle="#fff";
-  ctx.font="bold 72px Arial";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText(letter.char,letter.x+60,letter.y+54);
-  ctx.restore();
-}
-
-const emojiMap = {
-  CAT:"🐱",DOG:"🐶",COW:"🐄",PIG:"🐷",HEN:"🐔",DUCK:"🦆",
-  GOAT:"🐐",LION:"🦁",BEAR:"🐻",FROG:"🐸",FISH:"🐟",BIRD:"🐦",
-  DEER:"🦌",MONKEY:"🐒",HORSE:"🐴",SHEEP:"🐑",
-  APPLE:"🍎",MANGO:"🥭",BANANA:"🍌",GRAPE:"🍇",ORANGE:"🍊",
-  PEACH:"🍑",PEAR:"🍐",PLUM:"🍑",
-  BALL:"⚽",BOOK:"📘",PEN:"🖊️",CUP:"☕",HAT:"🧢",BAG:"🎒",BOX:"📦",
-  CHAIR:"🪑",TABLE:"🪑",BED:"🛏️",
-  CAR:"🚗",BUS:"🚌",VAN:"🚐",BIKE:"🚲",TRAIN:"🚆",SHIP:"🚢",PLANE:"✈️",
-  SUN:"☀️",MOON:"🌙",STAR:"⭐",TREE:"🌳",RAIN:"🌧️",SNOW:"❄️",WIND:"💨",CLOUD:"☁️",
-  MILK:"🥛",WATER:"💧",FOOD:"🍽️",HOME:"🏠",DOOR:"🚪",CLOCK:"⏰",SHOE:"👟",SOCK:"🧦",
-  RED:"🔴",BLUE:"🔵",GREEN:"🟢",YELLOW:"🟡",PINK:"🌸",BLACK:"⚫",WHITE:"⚪"
-};
-
-function showPopup(word){
-  document.getElementById("popupImg").textContent = emojiMap[word] || "🧸";
-  document.getElementById("popupWord").textContent = word;
-  document.getElementById("popup").style.display="flex";
-}
-
-document.getElementById("popupBtn").onclick=()=>{
-  document.getElementById("popup").style.display="none";
-  w=(w+1)%words.length;
-  i=0; collected="";
-  letter.char=words[w][0];
-  letter.x=Math.random()*(canvas.width-140)+40;
-  letter.y=Math.random()*(canvas.height-200)+100;
-  hitLock=false;
-};
-
-function check(){
-  if(hitLock) return;
-  const dx=(player.x+40)-(letter.x+60);
-  const dy=(player.y+40)-(letter.y+60);
-  if(Math.sqrt(dx*dx+dy*dy)<85){
-    hitLock=true;
-    const ch=letter.char;
-    collected+=ch;
-    speak(ch);
-    i++;
-    letter.x=-200; letter.y=-200;
-    if(i<words[w].length){
-      setTimeout(()=>{
-        letter.char=words[w][i];
-        letter.x=Math.random()*(canvas.width-140)+40;
-        letter.y=Math.random()*(canvas.height-200)+100;
-        hitLock=false;
-      },300);
-    }else{
-      setTimeout(()=>{
-        speak(words[w]);
-        setTimeout(()=>showPopup(words[w]),400);
-      },400);
-    }
-  }
-}
-
-function loop(){
-  ctx.fillStyle="#dff1ff";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  drawUI();
-  drawLetter();
-  drawPlayer();
-  check();
-  requestAnimationFrame(loop);
-}
-loop();
-</script>
-</body>
-</html>
+<canvas id="c"></can
